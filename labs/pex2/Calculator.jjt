@@ -1,0 +1,98 @@
+options {
+    LOOKAHEAD = 2;
+}
+
+PARSER_BEGIN(Calculator)
+
+import java.util.HashMap;
+
+public class Calculator {
+    public static HashMap<String, Integer> vars = new HashMap<String, Integer>();
+
+    public static void main(String[] args) throws ParseException {
+      System.out.println("Parser for a calculator that accepts expressions with integers, +, -, *, /, (, and ).");
+      System.out.println("Write an arithmetic expression:");
+      Calculator myCalc = new Calculator(System.in);
+      SimpleNode root = myCalc.Expression();
+
+      root.dump("");
+      System.out.println("Expression value: " + myCalc.eval(root));
+    }
+
+    int eval(SimpleNode node) {
+        if(node.jjtGetNumChildren() == 0) // leaf node with integer value
+            return node.val;
+        else if(node.jjtGetNumChildren() == 1) // only one child
+            return this.eval((SimpleNode) node.jjtGetChild(0));
+
+        SimpleNode lhs = (SimpleNode) node.jjtGetChild(0); //left child
+        SimpleNode rhs = (SimpleNode) node.jjtGetChild(1); // right child
+
+        switch(node.id) {
+            case CalculatorTreeConstants.JJTADD : return eval( lhs ) + eval( rhs );
+            case CalculatorTreeConstants.JJTSUB : return eval( lhs ) - eval( rhs );
+            case CalculatorTreeConstants.JJTMUL : return eval( lhs ) * eval( rhs );
+            case CalculatorTreeConstants.JJTDIV : return eval( lhs ) / eval( rhs );
+            default : // abort
+                System.out.println("Ilegal operator!");
+                System.exit(1);
+        }
+        return 0;
+    }
+}
+
+PARSER_END(Calculator)
+
+SKIP : {
+    " " | "\r" | "\t"
+}
+
+TOKEN : {
+    <INTEGER : (["0"-"9"])+>
+    | <MINUS : "-">
+    | <SYMBOL : ["A"-"Z","a"-"z"](["0"-"9","A"-"Z","a"-"z"])*>
+    | <EQ : "=">
+    | <SC : ";">
+    | <LF : "\n">
+    | <END : <SC><LF>>
+}
+
+SimpleNode Expression(): {} {
+    Assign() <END>  {return jjtThis;}
+}
+
+void Assign() #void: {Token t1, t2;} {
+    t1 = <SYMBOL>
+    <EQ>
+    [
+        t2 = <INTEGER> {vars.put(t1.image, Integer.parseInt(t2.image));}
+        | <MINUS> t2 = <INTEGER> {vars.put(t1.image, -Integer.parseInt(t2.image));}
+    ]
+    <END>
+    [ Assign() | Expr1(1) ]
+}
+
+void Expr1(int sign) #void: {} {
+    Expr2(sign) [
+        ("+" Expr2(sign)#Add(2)
+        | "-" Expr2(sign)#Sub(2))
+    ]
+}
+
+void Expr2(int sign) #void: {} {
+    Expr3(sign) [
+        ("*" Expr3(1)#Mul(2)
+        | "/" Expr3(1)#Div(2))
+    ]
+}
+
+void Expr3(int sign) #void: {Token t;} {
+    t = <INTEGER> {
+        jjtThis.val = sign * Integer.parseInt(t.image);
+    } #Term
+    | t = <SYMBOL> {
+        jjtThis.val = sign * vars.get(t.image);
+    } #Symbol
+    | "-" Expr3(-1)
+    | "(" Expr1(sign) ")"
+}

@@ -1,0 +1,27 @@
+PARSER_BEGIN(Example)
+
+public class Example {
+    public static void main(String args[]) throws ParseException {
+        Example parser = new Example(System.in);
+        parser.Aritm();
+    }
+}
+PARSER_END(Example)
+
+SKIP : {
+    " " | "\t" | "\r"
+}
+
+TOKEN : {
+    <INTEGER : (["0"-"9"])+>
+    | <OPERATOR : "+" | "-">
+    | <LF : "\n">
+}
+
+void Aritm() : {Token t;} {
+    t = <INTEGER> {System.out.println("Integer = " + t.image);}
+    (
+        t = <OPERATOR> {System.out.println("Operator = " + t.image);}
+        t = <INTEGER> {System.out.println("Integer = " + t.image);}
+    )? <LF>
+}
