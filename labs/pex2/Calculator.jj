@@ -68,11 +68,11 @@ SimpleNode Expression(): {/*@bgen(jjtree) Expression */
 /*@egen*/} {/*@bgen(jjtree) Expression */
     try {
 /*@egen*/
-    Assign() <END>/*@bgen(jjtree)*/
-                    {
-                      jjtree.closeNodeScope(jjtn000, true);
-                      jjtc000 = false;
-                    }
+    (Assign())* Expr1(1) <END>/*@bgen(jjtree)*/
+                                {
+                                  jjtree.closeNodeScope(jjtn000, true);
+                                  jjtc000 = false;
+                                }
 /*@egen*/  {return jjtn000;}/*@bgen(jjtree)*/
     } catch (Throwable jjte000) {
       if (jjtc000) {
@@ -104,7 +104,6 @@ void Assign()      : {Token t1, t2;} {
         | <MINUS> t2 = <INTEGER> {vars.put(t1.image, -Integer.parseInt(t2.image));}
     ]
     <END>
-    [ Assign() | Expr1(1) ]
 }
 
 void Expr1(int sign)      : {} {
@@ -272,6 +271,6 @@ void Expr3(int sign)      : {Token t;} {
                      }
                    }
 /*@egen*/        
-    | "-" Expr3(-1)
+    | "-" Expr3(-1*sign)
     | "(" Expr1(sign) ")"
 }

@@ -58,7 +58,7 @@ TOKEN : {
 }
 
 SimpleNode Expression(): {} {
-    Assign() <END>  {return jjtThis;}
+    (Assign())* Expr1(1) <END>  {return jjtThis;}
 }
 
 void Assign() #void: {Token t1, t2;} {
@@ -69,7 +69,6 @@ void Assign() #void: {Token t1, t2;} {
         | <MINUS> t2 = <INTEGER> {vars.put(t1.image, -Integer.parseInt(t2.image));}
     ]
     <END>
-    [ Assign() | Expr1(1) ]
 }
 
 void Expr1(int sign) #void: {} {
@@ -93,6 +92,6 @@ void Expr3(int sign) #void: {Token t;} {
     | t = <SYMBOL> {
         jjtThis.val = sign * vars.get(t.image);
     } #Symbol
-    | "-" Expr3(-1)
+    | "-" Expr3(-1*sign)
     | "(" Expr1(sign) ")"
 }
